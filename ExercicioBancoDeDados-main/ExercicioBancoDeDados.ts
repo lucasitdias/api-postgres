@@ -1,43 +1,36 @@
-// api_aluno_completo.js
-// ----------------------------------------------------
-// Exercício completo:
-// - Solicita nome, série, idade
-// - Solicita 8 notas de cada matéria (Matemática, Geografia, História)
-// - Calcula média de cada matéria
-// - Armazena tudo no PostgreSQL
-// ----------------------------------------------------
+// Autores
+// RA: 2502913 Nome: Allan Keiji Kimura
+// RA: 2500298 Nome: Evillyn Ghiovana de Oliveira Galvão
+// RA: 2502267 Nome: Lucas Luigi Dias Custodio
 
-// Importação das bibliotecas
-const { Pool } = require('pg');
-const readlineSync = require('readline-sync');
+// Importa o Pool do pacote 'pg' para conectar ao PostgreSQL
+import { Pool } from "pg";
 
-// ----------------------------------------------------
-// CONFIGURAÇÕES DO BANCO DE DADOS
-// ----------------------------------------------------
+// Importa o readline-sync para entrada de dados via terminal
+import readlineSync from "readline-sync";
+
+// Configurações de acesso ao banco de dados PostgreSQL
 const dbConfig = {
-  user: 'aluno',
-  host: 'localhost',
-  database: 'db_profedu',
-  password: '102030',
-  port: 5432,
+  user: "aluno", // usuário do banco
+  host: "localhost", // endereço do banco (Docker local)
+  database: "db_profedu", // nome do banco
+  password: "102030", // senha definida no Docker
+  port: 5432, // porta padrão do PostgreSQL
 };
 
-// ----------------------------------------------------
-// CONEXÃO
-// ----------------------------------------------------
+// Cria uma instância de conexão com o banco
 const pool = new Pool(dbConfig);
 
-// ----------------------------------------------------
-// FUNÇÃO PRINCIPAL
-// ----------------------------------------------------
+// Função principal que executa o cadastro do aluno
 async function cadastrarAluno() {
   console.log("\n--- Cadastro de Aluno ---");
 
-  const nome = readlineSync.question('Nome do aluno: ');
-  const serie = readlineSync.question('Série: ');
-  const idade = readlineSync.questionInt('Idade: ');
+  // Coleta os dados básicos do aluno
+  const nome = readlineSync.question("Nome do aluno: ");
+  const serie = readlineSync.question("Serie (sem acento): ");
+  const idade = readlineSync.questionInt("Idade: ");
 
-  // Cria tabela caso não exista
+  // Cria a tabela 'alunos' se ela ainda não existir
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS alunos (
       id SERIAL PRIMARY KEY,
@@ -46,15 +39,14 @@ async function cadastrarAluno() {
       idade INT NOT NULL,
       media_matematica NUMERIC(5,2),
       media_geografia NUMERIC(5,2),
-      media_historia NUMERIC(5,2)
+      media_historia NUMERIC(5,2),
+      media_geral NUMERIC(5,2)
     );
   `;
   await pool.query(createTableQuery);
 
-  // ----------------------------------------------------
-  // Função auxiliar para ler notas e calcular média
-  // ----------------------------------------------------
-  function calcularMedia(nomeMateria: string) {
+  // Função para calcular a média de uma matéria com 8 notas
+  function calcularMedia(nomeMateria: string): number {
     console.log(`\n--- ${nomeMateria} ---`);
     let soma = 0;
     for (let i = 1; i <= 8; i++) {
@@ -66,42 +58,65 @@ async function cadastrarAluno() {
     return media;
   }
 
-  // ----------------------------------------------------
-  // Coleta notas e calcula médias
-  // ----------------------------------------------------
+  // Calcula as médias individuais
   const mediaMatematica = calcularMedia("Matemática");
   const mediaGeografia = calcularMedia("Geografia");
   const mediaHistoria = calcularMedia("História");
 
-  // ----------------------------------------------------
-  // Salva no banco de dados
-  // ----------------------------------------------------
+  // Calcula a média geral com base nas três matérias
+  const mediaGeral = parseFloat(
+    ((mediaMatematica + mediaGeografia + mediaHistoria) / 3).toFixed(2)
+  );
+
   try {
     console.log("\nSalvando dados no banco...");
+
+    // Query para inserir os dados do aluno no banco
     const insertQuery = `
-      INSERT INTO alunos (nome, serie, idade, media_matematica, media_geografia, media_historia)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO alunos (
+        nome, serie, idade,
+        media_matematica, media_geografia, media_historia, media_geral
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
-    const values = [nome, serie, idade, mediaMatematica, mediaGeografia, mediaHistoria];
+
+    // Valores que serão inseridos
+    const values = [
+      nome,
+      serie,
+      idade,
+      mediaMatematica,
+      mediaGeografia,
+      mediaHistoria,
+      mediaGeral,
+    ];
+
+    // Executa a inserção
     await pool.query(insertQuery, values);
 
+    // Exibe os dados cadastrados
     console.log("\n-----------------------------------");
     console.log("Aluno cadastrado com sucesso!");
     console.log(`Nome: ${nome}`);
     console.log(`Série: ${serie}`);
     console.log(`Idade: ${idade}`);
-    console.log(`Médias => Matemática: ${mediaMatematica.toFixed(2)}, Geografia: ${mediaGeografia.toFixed(2)}, História: ${mediaHistoria.toFixed(2)}`);
+    console.log(
+      `Médias => Matemática: ${mediaMatematica.toFixed(
+        2
+      )}, Geografia: ${mediaGeografia.toFixed(
+        2
+      )}, História: ${mediaHistoria.toFixed(2)}`
+    );
+    console.log(`Média Geral: ${mediaGeral}`);
     console.log("-----------------------------------");
-
   } catch (error) {
+    // Caso ocorra erro na inserção
     console.error("Erro ao salvar no banco:", error);
   } finally {
+    // Encerra a conexão com o banco
     await pool.end();
     console.log("\nConexão com o banco encerrada.");
   }
 }
 
-// ----------------------------------------------------
-// EXECUÇÃO
-// ----------------------------------------------------
+// Executa a função principal
 cadastrarAluno();

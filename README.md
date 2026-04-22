@@ -1,9 +1,11 @@
 ---
+
 # 📚 Aplicação de Cadastro de Alunos com PostgreSQL
 
 Este projeto foi desenvolvido como parte de um exercício prático para armazenar dados de alunos e calcular médias de matérias usando TypeScript e PostgreSQL. A aplicação roda via terminal e salva os dados diretamente em um banco de dados PostgreSQL hospedado em um contêiner Docker.
 
 ---
+
 ## 🎯 Objetivo do Projeto
 
 A aplicação tem o propósito de:
@@ -216,7 +218,7 @@ const dbConfig = {
 > - Série  
 > - Idade  
 > - Matérias: Matemática, Geografia, História  
-
+>
 > Os dados devem ser armazenados em um banco de dados.  
 > O cálculo da média das matérias também deve ser salvo.  
 > Calcule a média considerando 8 provas de cada matéria.”
